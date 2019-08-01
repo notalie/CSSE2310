@@ -187,7 +187,6 @@ void print_deck(Deck* deck) {
         printf("%d%c ", deck->deckPile[i].number, deck->deckPile[i].letter);
     }
     printf("\n");
-    printf("After end of print deck function\n");
 }
 
 
@@ -200,14 +199,17 @@ void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
     *deckFile = fopen(fileName, "r");
     // Read first line
     int readDeckSize = atoi(read_line(*deckFile));
-    int actualDeckSize = -1;
+    int actualDeckSize = -1; 
     char* readLine;
-    while((strcmp(readLine, ""))) {
+    while(1) {
         readLine = read_line(*deckFile);
         actualDeckSize++;
+        if(!(strcmp(readLine, ""))) {
+            break;
+        }
     }
     fclose(*deckFile);
-    
+
     if(actualDeckSize != readDeckSize) {
         fprintf(stderr, "Unable to parse deckfile\n");
         exit(3);
@@ -225,8 +227,6 @@ void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
         }
         fclose(*deckFile);
         print_deck(deck);
-        printf("After print deck\n");
-        //I think it dies here, pretty sure it's because I'm not freeing it
     }
 }
 
@@ -251,19 +251,15 @@ int main(int argc, char** argv) {
     //check_arg_types(argc, argv);
     FILE *gameFile;
     FILE *deckFile;
-    
-    // New Game
-    initialise_deck_file(argv[1], &deckFile, &deck);
+
+    // New Game 
     if(argc == 6) {
         screen.columnSize = atoi(argv[2]);
         screen.rowSize = atoi(argv[3]);
         initialise_deck_file(argv[1], &deckFile, &deck);
-        //It's here??
-        printf("After deck initialising\n");
     } else {
        initialise_save_file(argv[1], &gameFile, &deckFile, &player1, &player2);
     }
-    printf("Setting row sizes\n");
     initialise_screen(&screen);
     print_screen(&screen);
     return 0;
