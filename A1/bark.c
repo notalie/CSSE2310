@@ -160,10 +160,10 @@ void check_arg_types(int amountofInputs, char** inputs) {
 }
 
 /**
-*   Reads the line and sends back a char pointer/char array
+*   //TODO
 */
 char* read_line(FILE* fileName) {
-    char* result = malloc(sizeof(char));
+    char* result = malloc(sizeof(char) * 80);
     int position = 0;
     int next = 0;
     while (1) { 
@@ -172,29 +172,29 @@ char* read_line(FILE* fileName) {
             result[position] = '\0';
             return result;
         } else {
-            result[position] = (char)next;
-            position++;
-            result = realloc(result, sizeof(char) * position+1);
+            result[position++] = (char)next;
         }
     }
 }
 
 /** 
 *   Prints the deck being played in the game
-*   Parameters: Takes in a deck to print
+*   Parameters: Takes in a deck pointer
 */
-void print_deck(Deck deck) {
-    for(int i = 0; i < deck.deckSize; i++) {
-        printf("%d%c", deck.deckPile[i].number, deck.deckPile[i].letter);
+void print_deck(Deck* deck) {
+    printf("Deck: ");
+    for(int i = 0; i < deck->deckSize; i++) {
+        printf("%d%c ", deck->deckPile[i].number, deck->deckPile[i].letter);
     }
     printf("\n");
+    printf("After end of print deck function\n");
 }
 
 
 /* 
 *   Initialises the deck file being read and checks if it is valid
 *   Parameters
-*   Exits in error status 3 if the deck file is invalid
+*   Exits in error
 */
 void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
     *deckFile = fopen(fileName, "r");
@@ -207,22 +207,26 @@ void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
         actualDeckSize++;
     }
     fclose(*deckFile);
-    *deckFile = fopen(fileName, "r");
-    // Read it once to negate the number of cards in a deck
-    read_line(*deckFile);
+    
     if(actualDeckSize != readDeckSize) {
+        fprintf(stderr, "Unable to parse deckfile\n");
         exit(3);
     } else {
         // If amount of cards in deck are correct, allocate memory for deck and
         // put each card in the deck
+        *deckFile = fopen(fileName, "r");
+        read_line(*deckFile);   // Read file once to negate the number of cards in a deck
         deck->deckSize = actualDeckSize;
-        deck->deckPile = malloc(sizeof(char) * actualDeckSize);
+        deck->deckPile = malloc(sizeof(Piece) * actualDeckSize);
         for(int i = 0; i < actualDeckSize; i++) {
             readLine = read_line(*deckFile);
             deck->deckPile[i].number = atoi(&readLine[0]);
             deck->deckPile[i].letter = readLine[1];
         }
-        print_deck(*deck);
+        fclose(*deckFile);
+        print_deck(deck);
+        printf("After print deck\n");
+        //I think it dies here, pretty sure it's because I'm not freeing it
     }
 }
 
@@ -254,11 +258,12 @@ int main(int argc, char** argv) {
         screen.columnSize = atoi(argv[2]);
         screen.rowSize = atoi(argv[3]);
         initialise_deck_file(argv[1], &deckFile, &deck);
+        //It's here??
+        printf("After deck initialising\n");
     } else {
        initialise_save_file(argv[1], &gameFile, &deckFile, &player1, &player2);
     }
-	screen.rowSize = 4;
-	screen.columnSize = 4;	
+    printf("Setting row sizes\n");
     initialise_screen(&screen);
     print_screen(&screen);
     return 0;
@@ -281,9 +286,3 @@ int main(int argc, char** argv) {
 
 
 
-
-
-
-
-
-//no more
