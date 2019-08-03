@@ -222,6 +222,10 @@ void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
         deck->deckPile = malloc(sizeof(Piece) * actualDeckSize);
         for(int i = 0; i < actualDeckSize; i++) {
             readLine = read_line(*deckFile);
+            if(atoi(&readLine[0]) > 9 || atoi(&readLine[0]) < 1) {
+                fprintf(stderr, "Unable to parse deckfile\n");
+                exit(3);
+            }
             deck->deckPile[i].number = atoi(&readLine[0]);
             deck->deckPile[i].letter = readLine[1];
         }
@@ -248,7 +252,7 @@ int main(int argc, char** argv) {
     Deck deck;
     Player player1;
     Player player2;
-    //check_arg_types(argc, argv);
+    check_arg_types(argc, argv);
     FILE *gameFile;
     FILE *deckFile;
 
@@ -264,21 +268,3 @@ int main(int argc, char** argv) {
     print_screen(&screen);
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
