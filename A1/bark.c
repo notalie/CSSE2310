@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+ 
 /**
 *   Defined a type of struct called piece, each piece contains a letter and 
 *   number as stated by the Assignment spec so I thought this would be the 
@@ -23,11 +23,20 @@ typedef struct {
     Piece** board;
 } Screen;
 
+/**
+*   Struct for a player so that I can keep track on whether or not a player
+*   is automated or not
+*/
 typedef struct {
     Piece* playerHand;
     char type;
+    int currentPlayer;
+    int handSize;
 } Player;
 
+/**
+*   Struct for the deck so that I can keep track on the deck size for realloc
+*/
 typedef struct {
     Piece* deckPile;
     int deckSize;
@@ -39,9 +48,15 @@ typedef struct {
 */
 void initialise_screen(Screen* screen) {
     screen->board = malloc(sizeof(Piece) * screen->columnSize);
-    for(int i = 0; i < screen->rowSize; i++) {
+    for (int i = 0; i < screen->rowSize; i++) {
         screen->board[i] = malloc(sizeof(Piece) * screen->rowSize);
     } 
+    for (int i = 0; i < screen->rowSize; i++) {
+        for (int j = 0; j < screen->columnSize; j++) {
+            screen->board[i][j].number = 0;
+            screen->board[i][j].letter = 0;
+        }
+    }
 } 
 
 /** 
@@ -50,15 +65,15 @@ void initialise_screen(Screen* screen) {
 */
 void print_screen(Screen* screen) {
     Piece** board = screen->board;
-    for(int i = 0; i < screen->rowSize; i++) {
-        for(int j = 0; j < screen->columnSize; j++) {
-            if(board[i][j].number > 0 && board[i][j].number < 10) {
-                printf("%d%c ", board[i][j].number, 
+    for (int i = 0; i < screen->rowSize; i++) {
+        for (int j = 0; j < screen->columnSize; j++) {
+            if (board[i][j].number != 0 && board[i][j].letter != 0) {
+                printf("%d%c", board[i][j].number, 
                     board[i][j].letter);
             } else {
-                printf(".. ");
+                printf("..");
             }
-            if(j == screen->columnSize-1) {
+            if (j == screen->columnSize-1) {
                 printf("\n");
             } 
         }
@@ -71,7 +86,7 @@ void print_screen(Screen* screen) {
 *   Parameters: The screen being played on
 */
 void free_board(Screen* screen) {
-    for(int i = 0; i < screen->rowSize; i++) {
+    for (int i = 0; i < screen->rowSize; i++) {
         free(screen->board[i]);   
      } 
     free(screen->board);
@@ -87,8 +102,8 @@ int add_piece(Screen* screen, Piece piece, int x, int y) {
     // User inputs will begin at 1 so decrement by 1
     x--;
     y--;
-    if(screen->board[y][x].number > 0 && screen->board[y][x].number < 10) {
-        printf("This is not valid\n");
+    //Piece is in a place that already has a piece
+    if (screen->board[y][x].number != 0 && screen->board[y][x].number != 0) {
         return 0;
     } else{
         // Adds piece to the board
@@ -98,69 +113,56 @@ int add_piece(Screen* screen, Piece piece, int x, int y) {
 }
 
 /**
-*   //TODO
-*/
-void change_playerhand_size(Piece** playerHand, int size) {
-    *playerHand = realloc(playerHand, sizeof(Piece) * size);
-}
-
-
-//TODO
-void process_move() {
-
-}
-
-/**
-*   //TODO
-*/
-int main_game_loop() {
-    //Check if stdin has ended, check what the player type is
-    exit(7);
-    return 1;
-}
-
-/**
-*   //TODO
+*   Sets player types to be either a for automated or h for user input (stdin)
 */
 void initialise_player_types(Player* player1, Player* player2, 
-    int argc, char** argv) {
-    if(argc == 6) {
-        player1->type = argv[4][0];
-        player2->type = argv[5][0];
-    } else {
-        player1->type = argv[2][0];
-        player2->type = argv[3][0];
+    int amountOfInputs, char** inputs) {
+    if (amountOfInputs == 6) {
+        player1->type = inputs[4][0];
+        player2->type = inputs[5][0];
+    } else if (amountOfInputs == 4) {
+        player1->type = inputs[2][0];
+        player2->type = inputs[3][0];
     }
 }
 
 /**
-*   //TODO
+*   Checks the arg types entered, if there is an incorrect number of numbers,
+*   Parameters: The amount of inputs entered into the program, a string array
+*   containing the inputs entered and pointer to players so that they can
+*   be initialised if all the values are valid
+*   exit with status 1, if the formatting is incorrect, exit with status 2
 */
-void check_arg_types(int amountofInputs, char** inputs) {
-    if(amountofInputs != 6 && amountofInputs != 4) {
+void check_arg_types(int amountOfInputs, char** inputs, Player* player1, 
+    Player* player2) {
+    if (amountOfInputs != 6 && amountOfInputs != 4) {
         fprintf(stderr, "Usage: bark savefile p1type p2type\n"
             "bark deck width height p1type p2type\n");
         exit(1);
-    } else if(amountofInputs == 6 && (atoi(inputs[2]) < 3 || 
+    } else if (amountOfInputs == 6 && (atoi(inputs[2]) < 3 || 
         atoi(inputs[2]) > 100|| atoi(inputs[3]) < 3 || 
             atoi(inputs[3]) > 100)) {
         fprintf(stderr, "Incorrect arg types\n");
         exit(2);
-    } else if(amountofInputs == 6 && ((strcmp(inputs[4], "a") && 
+    } else if (amountOfInputs == 6 && ((strcmp(inputs[4], "a") && 
         strcmp(inputs[4], "h")) || (strcmp(inputs[5], "a") && 
             strcmp(inputs[5], "h")))) {
         fprintf(stderr, "Incorrect arg types\n");
         exit(2);
-    } else if(amountofInputs == 4 && ((strcmp(inputs[2], "a") 
+    } else if (amountOfInputs == 4 && ((strcmp(inputs[2], "a") 
         && strcmp(inputs[2], "h")) || (strcmp(inputs[3], "a") && 
             strcmp(inputs[3], "h")))) { 
         fprintf(stderr, "Incorrect arg types\n");
         exit(2);
-    } 
+    } else{
+        // If all inputs are correct, initialise players
+        initialise_player_types(player1, player2, amountOfInputs, inputs);
+    }
 }
 
 /**
-*   //TODO
+*   Reads the lines in a file and returns it, taken from our lord saviour Joel
+*   Returns: The line read from the file
 */
 char* read_line(FILE* fileName) {
     char* result = malloc(sizeof(char) * 80);
@@ -178,71 +180,560 @@ char* read_line(FILE* fileName) {
 }
 
 /** 
-*   Prints the deck being played in the game
-*   Parameters: Takes in a deck pointer
+*   Prints the deck being played in the game, helper function
+*   Parameters: Takes in a deck pointer and prints it
 */
 void print_deck(Deck* deck) {
     printf("Deck: ");
-    for(int i = 0; i < deck->deckSize; i++) {
+    for (int i = 0; i < deck->deckSize; i++) {
         printf("%d%c ", deck->deckPile[i].number, deck->deckPile[i].letter);
     }
     printf("\n");
 }
-
+ 
+/**
+*   Checks the deck file for a valid input and changes the actual deck size 
+*   from a counter
+*   Parameters: The file name, the pointer to the deck file, the actualDeckSize
+*   Returns: The read deck size 
+*/
+int check_deck_file(char* fileName, FILE** deckFile, int* actualDeckSize) {
+    if (*deckFile == NULL) {
+        *deckFile = fopen(fileName, "r");
+    }
+    if (*deckFile == NULL) {
+        fprintf(stderr, "Unable to parse deckfile\n");
+        exit(3);
+    }
+    // Read first line 
+    char* readLine = read_line(*deckFile);
+    int readDeckSize = atoi(readLine);
+    free(readLine);
+    while (1) { 
+        readLine = read_line(*deckFile);
+        (*actualDeckSize)++;
+        if (!(strcmp(readLine, ""))) {
+            free(readLine);
+            break;
+            fclose(*deckFile);
+        }
+        free(readLine);
+    }
+    return readDeckSize;
+}
 
 /* 
 *   Initialises the deck file being read and checks if it is valid
-*   Parameters
+*   Parameters: The file name, the pointer to the deck file 
+*   and the deck to intiialise
 *   Exits in error
 */
 void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
-    *deckFile = fopen(fileName, "r");
-    // Read first line
-    int readDeckSize = atoi(read_line(*deckFile));
-    int actualDeckSize = -1; 
-    char* readLine;
-    while(1) {
-        readLine = read_line(*deckFile);
-        actualDeckSize++;
-        if(!(strcmp(readLine, ""))) {
-            break;
-        }
-    }
-    fclose(*deckFile);
-
-    if(actualDeckSize != readDeckSize) {
+    int actualDeckSize = -1;
+    int readDeckSize = check_deck_file(fileName, deckFile, &actualDeckSize);
+    if (actualDeckSize != readDeckSize) {
         fprintf(stderr, "Unable to parse deckfile\n");
         exit(3);
+    } else if(actualDeckSize < 11) {
+        fprintf(stderr, "Short Deck\n");
+        exit(5);
     } else {
         // If amount of cards in deck are correct, allocate memory for deck and
         // put each card in the deck
+        char* readLine;
         *deckFile = fopen(fileName, "r");
-        read_line(*deckFile);   // Read file once to negate the number of cards in a deck
+        free(read_line(*deckFile));  
         deck->deckSize = actualDeckSize;
         deck->deckPile = malloc(sizeof(Piece) * actualDeckSize);
-        for(int i = 0; i < actualDeckSize; i++) {
-            readLine = read_line(*deckFile);
-            if(atoi(&readLine[0]) > 9 || atoi(&readLine[0]) < 1) {
-                fprintf(stderr, "Unable to parse deckfile\n");
+        for (int i = 0; i < actualDeckSize; i++) {
+            readLine = read_line(*deckFile); 
+            if (readLine[1] > 90 || readLine[1] < 65 || readLine[0] < 49 || 
+                readLine[0] > 57 || (readLine[2] != 32 && readLine[2] != 0)) {
+                free(deck->deckPile);
+                fprintf(stderr, "%s","Unable to parse deckfile\n");
+                fclose(*deckFile);
+                free(readLine);
                 exit(3);
-            }
+            } 
             deck->deckPile[i].number = atoi(&readLine[0]);
             deck->deckPile[i].letter = readLine[1];
+            free(readLine);
         }
         fclose(*deckFile);
-        print_deck(deck);
     }
 }
 
 /**
-*   Initialises the save file, if it is invalid, exit with code 4, 
-*   if it is not, start parsing it
+*   //TODO
 */
-void initialise_save_file(char* fileName, FILE** gameFile, FILE** deckFile,
-    Player* player1, Player* player2) {
-    *gameFile = fopen(fileName, "r");
+char** string_split(char* stringToSplit, char splitValue, int* arraySize) {
+    int amountOfStrings = 0, currentStringSize = 0;
+    char** stringToReturn;
+    char* currentString = malloc(sizeof(char));
+    stringToReturn = malloc(sizeof(char));
+    int stringSize = strlen(stringToSplit);
+    for (int i = 0; i < stringSize; i++) {
+        if (stringToSplit[i] == splitValue && stringToSplit[i+1] 
+            != splitValue) {
+            stringToReturn = realloc(stringToReturn, sizeof(char) * 
+                (amountOfStrings+1));
+            stringToReturn[amountOfStrings] = malloc(sizeof(char) * 
+                currentStringSize);
+            currentString[currentStringSize] = '\0';
+            stringToReturn[amountOfStrings] = currentString;
+            amountOfStrings++;
+            currentString = '\0';
+            currentStringSize = 0;
+        } else {
+            currentString = realloc(currentString, sizeof(char) * 
+                currentStringSize+1);
+            currentString[currentStringSize] = stringToSplit[i];
+            currentStringSize++;
+        }
+    }
+    if (currentString != 0) {
+         stringToReturn = realloc(stringToReturn, sizeof(char) * 
+            (amountOfStrings+1));
+        stringToReturn[amountOfStrings] = malloc(sizeof(char) * 
+            currentStringSize);
+        stringToReturn[amountOfStrings] = currentString;
+        amountOfStrings++;
+    }
+    *arraySize = amountOfStrings;
+    return stringToReturn;
 }
 
+/**
+*   Helper function for my helper function that frees the memory
+*   of a passed in allocated string array
+*/
+void free_string(char** stringToFree, int arraySize) {
+    for (int i = 0; i < arraySize; i++) {
+            free(stringToFree[i]);
+    }
+    free(stringToFree);
+} 
+
+/**
+*   Helper function for check save file, checks if the first line is valid
+*   Exits: 4 if the save file is not valid
+*/
+char** check_first_save_line(char* lineToCheck, FILE** gameFile) {
+    int arraySize = 0; 
+    int lineSize = strlen(lineToCheck);
+    //Check for things that aren't null, space or numbers
+    for (int i = 0; i < lineSize; i++) {
+        if (lineToCheck[i] > 58 || lineToCheck[i] < 48) {
+            if ((lineToCheck[i] == 32 && lineToCheck[i+1] == 32) || 
+                lineToCheck[i] != 32) {
+                fprintf(stderr, "Unable to parse savefile\n");
+                exit(4);
+            }
+        } 
+    }
+    char** returnedString = string_split(lineToCheck, ' ', &arraySize);
+    if (atoi(returnedString[0]) > 100 || atoi(returnedString[0]) < 3 ||
+        atoi(returnedString[1]) > 100 || atoi(returnedString[1]) < 3 ||
+        arraySize != 4) {
+        free_string(returnedString, arraySize);
+        fprintf(stderr, "Unable to parse savefile\n");
+        exit(4);
+    } else if (atoi(returnedString[3]) != 2 && atoi(returnedString[3]) != 1) {
+        free_string(returnedString, arraySize);
+        fprintf(stderr, "Unable to parse savefile\n");
+        exit(4);
+    }
+    return returnedString;
+}
+
+/**
+*   Checks individual lines of player hands, helper function 
+*/
+void intialise_player_hand(Player* player, int playerLineLength, char* line) {
+    int counter = 0;
+    for (int i = 0; i < playerLineLength*2; i++) {
+        if (i%2 == 0) {
+            if (line[i] < 49 || line[i] > 57) {
+                fprintf(stderr, "Unable to parse savefile\n");
+                exit(4);
+            }
+        } else {
+            if (line[i] > 90 || line[i] < 65) {
+                free(player->playerHand);
+                fprintf(stderr, "Unable to parse savefile\n");
+                exit(4);
+            } else {
+                player->playerHand[counter].number = atoi(&line[i-1]);
+                player->playerHand[counter].letter = line[i];
+                counter++;
+            }
+        } 
+    }
+}
+
+/**
+*   //TODO
+*/
+Piece draw_from_deck(Deck* deck) {
+    Piece topPiece = deck->deckPile[0];
+    for (int i = 0; i < deck->deckSize; i++) {
+        deck->deckPile[i] = deck->deckPile[i+1];
+    }
+    (deck->deckSize)--;
+    deck->deckPile = realloc(deck->deckPile, sizeof(Piece) * deck->deckSize);
+    return topPiece;
+}
+
+void deal_to_player(Player* player, Deck* deck) {
+    player->playerHand[player->handSize] = draw_from_deck(deck);
+    (player->handSize)++;
+}
+
+/**
+*   Sets player 1 and player 2 hands to be set by the lines given
+*/
+void intiailise_player_hands(Player* player1, Player* player2, 
+    char* player2Hand, char* player1Hand) {
+    int player1LineLength = strlen(player1Hand)/2;
+    int player2LineLength = strlen(player2Hand)/2;
+    if (player1->currentPlayer && player1LineLength != 6) {
+        fprintf(stderr, "Unable to parse savefile\n");
+        exit(4);
+    } else if (player2->currentPlayer && player2LineLength != 6) {
+        fprintf(stderr, "Unable to parse savefile\n");
+        exit(4);
+    } else if (player2LineLength == player1LineLength) {
+        fprintf(stderr, "Unable to parse savefile\n");
+        exit(4);
+    }
+    player1->handSize = player1LineLength;
+    player2->handSize = player2LineLength;
+    player1->playerHand = malloc(sizeof(Piece) * 6);
+    player2->playerHand = malloc(sizeof(Piece) * 6);
+    intialise_player_hand(player1, player1LineLength, player1Hand);
+    intialise_player_hand(player2, player2LineLength, player2Hand);
+}
+
+//<==============LOAD GAME==========
+
+/**
+*   Sets the screen to the read save file
+*/
+int initialise_read_screen(Screen* screen, char* line, int row, int* pieces) {
+    int isBoardFull = 1;
+    for (int i = 0; i < screen->columnSize*2; i++) {
+        if (i%2 == 0) {
+            if (line[i] != 42 && (line[i] < 49 || line[i] > 57)) {
+                fprintf(stderr, "Unable to parse savefile\n");
+                exit(4);
+            } 
+        } else {
+            if (line[i] != 42 && (line[i] > 90 || line[i] < 65)) {
+                fprintf(stderr, "Unable to parse savefile\n");
+                exit(4);
+            } else if (line[i] != 42) {
+                screen->board[row][i/2].number = atoi(&line[i-1]);
+                screen->board[row][i/2].letter = line[i];
+            } else if ((line[i] == 42 && line[i-1] != 42) ||
+                (line[i-1] == 42 && line[i] != 42)) {
+                fprintf(stderr, "Unable to parse savefile\n");
+                exit(4);
+            } else if (line[i] == 42) {
+                isBoardFull = 0;
+                (*pieces)++;
+            }
+        } 
+    } 
+    return isBoardFull;
+}
+
+/**
+*   Checks the board section of a save file to make sure it is not over the 
+*   specificed length and is not full.
+*/
+int check_saved_screen(Screen* screen, FILE** gameFile) {
+    int boardIsFull;
+    int pieces = 0;
+    for (int i = 0; i < screen->rowSize; i++) {
+        boardIsFull += initialise_read_screen(screen, read_line(*gameFile), i,
+            &pieces);
+        //TODO: this is returning 5 every time not sure why
+        printf("%d\n", boardIsFull);
+    }
+    if (read_line(*gameFile)[0] != 0) {
+        fclose(*gameFile);
+        fprintf(stderr, "Unable to parse savefile\n");
+        exit(4);
+    }
+    if (boardIsFull == screen->rowSize) {
+        fprintf(stderr, "Board full\n");
+        exit(6);
+    }
+    return (screen->rowSize * screen->columnSize) - pieces;
+}
+
+/**
+*   Initialises the save file, if it is invalid, exit with code 4, 
+*   if it is not, start parsing it, set active players
+*/
+void initialise_save_file(char* fileName, FILE** gameFile, FILE** deckFile,
+    Player* player1, Player* player2, Screen* screen, Deck* deck) {
+    char* readLine;
+    *gameFile = fopen(fileName, "r");
+    if (*gameFile == NULL) {
+        fprintf(stderr, "%s", "Unable to parse savefile\n");
+        exit(4);
+    } 
+    readLine = read_line(*gameFile);
+    if (strlen(readLine) < 4) {
+        fclose(*gameFile);
+        fprintf(stderr, "Unable to parse savefile\n");
+        exit(4);
+    }
+    char** firstLine = check_first_save_line(readLine, gameFile);
+    screen->columnSize = atoi(firstLine[0]);
+    screen->rowSize = atoi(firstLine[1]);
+    initialise_screen(screen);
+    if (atoi(firstLine[3]) == 1) {
+        player1->currentPlayer = 1;
+        player2->currentPlayer = 0;
+    } else {
+        player1->currentPlayer = 0;
+        player2->currentPlayer = 1;
+    } 
+    readLine = read_line(*gameFile);
+    initialise_deck_file(readLine, deckFile, deck);
+    intiailise_player_hands(player1, player2, read_line(*gameFile), 
+        read_line(*gameFile));
+    int placedPieces = check_saved_screen(screen, gameFile);
+    if((placedPieces + 11) != atoi(firstLine[2])) {
+        fprintf(stderr, "Unable to parse savefile\n");
+        fclose(*gameFile);
+        exit(4);
+    }
+    for(int i = 0; i < atoi(firstLine[2]); i++) {
+        draw_from_deck(deck);
+    }
+    free(readLine);
+}
+
+//<==============PLAYER AND MAIN GAME==========
+
+/** 
+*   //TODO
+*/
+void switch_player(Player* player1, Player* player2, int* currentPlayer) {
+    if (player1->currentPlayer) {
+        *currentPlayer = 2;
+        player1->currentPlayer ^= 1;
+        player2->currentPlayer ^= 1;
+    } else {
+        *currentPlayer = 1;
+        player1->currentPlayer ^= 1;
+        player2->currentPlayer ^= 1;
+    }
+}
+
+/** 
+*   //TODO
+*/
+Player* get_current_player(Player* player1, Player* player2, 
+    int currentPlayer) {
+    if (currentPlayer == 1) {
+        return player1;
+    } else {
+        return player2;
+    }
+}
+
+/** 
+*   //TODO
+*/
+void remove_player_piece(Player* player, int index) {
+    for (int i = 0; i < player->handSize; i++) {
+        player->playerHand[index+i] = player->playerHand[index+i+1];
+    }
+    (player->handSize)--;
+}
+
+/** 
+*   //TODO: might change on spec
+*/
+int process_user_input(char** returnedString, Screen* screen, Player* player, 
+    int cardsPlayed) {
+    //Check every input is only a number with no space
+    for (int i = 0; i < 3; i++) {
+        int stringLength = strlen(returnedString[i]);
+        for (int j = 0; j < stringLength; j++) {
+            if( returnedString[i][j] == 32) {
+                return 0;
+            }
+        }        
+    }
+    if (returnedString[0][0] > 54 || returnedString[0][0] < 49) {
+        return 0;
+    } else if (atoi(returnedString[1]) > screen->columnSize || 
+        atoi(returnedString[1]) < 1) {
+        return 0;
+    } else if (atoi(returnedString[2]) > screen->rowSize || 
+        atoi(returnedString[2]) < 1) {
+        return 0;
+    } 
+    if (add_piece(screen, player->playerHand[atoi(returnedString[0])-1], 
+        atoi(returnedString[1]),atoi(returnedString[2]))) {
+        remove_player_piece(player, atoi(returnedString[0])-1);
+        return 1;
+    } else {
+        return 0;
+    } 
+}
+
+/** 
+*   //TODO: might change on spec
+*/
+int is_save_file_line(char* line) {
+    if (line[0] != 'S' || line[1] != 'A' || line[2] != 'V' || line[3] != 'E') {
+        return 0;
+    } else {
+        int saveLineLength = strlen(line);
+        if (saveLineLength < 10) {
+            printf("Unable to save\n");
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/** 
+*   //TODO
+*/
+int process_manual_move(char** saveFileName, Screen* screen, Player* player,
+    Deck* deck, int cardsPlayed) {
+    char* userInput = malloc(sizeof(char) * 80);
+    while (1) {
+        printf("Move? ");
+        userInput = fgets(userInput, 80, stdin);
+        if (userInput == NULL) {
+            fprintf(stderr, "End of input\n");
+            exit(7);
+        } else {
+            int inputSize = 0;
+            char** returnedString = string_split(userInput, ' ', &inputSize);
+            // If input is 1 long and savezzzzz is valid, return 1
+            //TODO: see if spaces are valid input
+            if (is_save_file_line(userInput)) {
+                *saveFileName = userInput;
+                return 1;
+            }
+            if (inputSize != 3) {
+                //Repeat if invalid move
+                process_manual_move(saveFileName, screen, player, deck, 
+                    cardsPlayed);
+            } else {
+                int successfulMove;
+                //Index for user, check valid inputs
+                successfulMove = process_user_input(returnedString, screen, 
+                    player, cardsPlayed);
+                if(!successfulMove) {
+                    process_manual_move(saveFileName, screen, player, deck, 
+                        cardsPlayed);
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    free(userInput);
+    return 0;
+}
+
+/**
+*   Returns 1 if the game is over, returns 0 is it isn't
+*/
+int is_game_over(Screen* screen, Deck* deck) {
+    Piece** board = screen->board;
+    if (deck->deckSize == 0) {
+        return 1;
+    } else {
+        for (int i = 0; i < screen->rowSize; i++) {
+            for (int j = 0; j < screen->columnSize; j++) {
+                if (board[i][j].number == 0 && board[i][j].letter == 0) {
+                    return 0;
+                } 
+            }
+        }
+        return 1;
+    }
+}
+
+/**
+*   //TODO
+*/
+void print_player_hand(Player* player, int movingPlayer) {
+    printf("Hand(%d): ", movingPlayer);
+    for(int i = 0; i < player->handSize; i++) {
+        printf("%d%c", player->playerHand[i].number, 
+            player->playerHand[i].letter);
+        if (i + 1 == player->handSize) {
+            printf("\n");
+        } else {
+            printf(" ");
+        }
+    }
+}
+
+/**
+*   //TODO
+*/
+void save_file(Screen* screen, Deck* deck, Player* player1, Player* player2, 
+    int cardsPlayed, int movingPlayer, char* fileName) {
+    FILE* savePointer = fopen(fileName, "w");
+    fprintf(savePointer, "%d %d %d %d\n", screen->columnSize, screen->rowSize,
+        cardsPlayed, movingPlayer);
+    fclose(savePointer);
+    exit(1);
+}
+
+/**
+*   //TODO
+*/
+void main_game_loop(Screen* screen, Player* player1, Player* player2, 
+    Deck* deck) {
+    int movingPlayer = 2;
+    int cardsPlayed = 0;
+    //Set current player
+    if (player1->currentPlayer) {
+        movingPlayer = 1;
+    }
+    
+    while (1) {
+        if (is_game_over(screen, deck)) {
+            printf("The game is dead crab rave \n");
+            break;
+        } else {
+            Player* currentPlayer = get_current_player(player1, player2, 
+                movingPlayer);
+            if (currentPlayer->type == 'a') {
+                break;
+            } else {
+                print_screen(screen);
+                if(currentPlayer->handSize != 6) {
+                    deal_to_player(currentPlayer, deck);
+                }
+                print_player_hand(currentPlayer, movingPlayer);
+                char* saveName;
+                if (process_manual_move(&saveName, screen, currentPlayer, deck, 
+                    cardsPlayed)) {
+                    save_file(screen, deck, player1, player2, cardsPlayed, 
+                        movingPlayer, saveName);
+                } else {
+                    switch_player(player1, player2, &movingPlayer);
+                    cardsPlayed++;
+                }                
+            }
+        }
+    }
+}
 
 /**
 *   haha main loop 
@@ -252,19 +743,38 @@ int main(int argc, char** argv) {
     Deck deck;
     Player player1;
     Player player2;
-    check_arg_types(argc, argv);
-    FILE *gameFile;
-    FILE *deckFile;
-
+    check_arg_types(argc, argv, &player1, &player2);
+    FILE* gameFile;
+    FILE* deckFile;
     // New Game 
-    if(argc == 6) {
+    if (argc == 6) {
         screen.columnSize = atoi(argv[2]);
         screen.rowSize = atoi(argv[3]);
+        initialise_screen(&screen);
         initialise_deck_file(argv[1], &deckFile, &deck);
+        player1.handSize = 0;
+        player1.playerHand = malloc(sizeof(Piece) * 6);        
+        deal_to_player(&player1, &deck);
+        deal_to_player(&player1, &deck);
+        deal_to_player(&player1, &deck);
+        deal_to_player(&player1, &deck);
+        deal_to_player(&player1, &deck);    
+        player1.currentPlayer = 1;
+        player2.handSize = 0;
+        player2.playerHand = malloc(sizeof(Piece) * 6);        
+        deal_to_player(&player2, &deck);
+        deal_to_player(&player2, &deck);
+        deal_to_player(&player2, &deck);
+        deal_to_player(&player2, &deck);
+        deal_to_player(&player2, &deck);    
+        player2.currentPlayer = 1;
     } else {
-       initialise_save_file(argv[1], &gameFile, &deckFile, &player1, &player2);
+        initialise_save_file(argv[1], &gameFile, &deckFile, &player1, &player2,
+            &screen, &deck);
+
     }
-    initialise_screen(&screen);
+    main_game_loop(&screen, &player1, &player2, &deck);
     print_screen(&screen);
+    //free(deck.deckPile);
     return 0;
 }
