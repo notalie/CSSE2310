@@ -47,7 +47,7 @@ typedef struct {
 *   Parameter: Screen pointer
 */
 void initialise_screen(Screen* screen) {
-    screen->board = malloc(sizeof(Piece) * screen->columnSize);
+    screen->board = malloc(sizeof(Piece*) * screen->columnSize);
     for (int i = 0; i < screen->rowSize; i++) {
         screen->board[i] = malloc(sizeof(Piece) * screen->rowSize);
     } 
@@ -105,7 +105,6 @@ int add_piece(Screen* screen, Piece piece, int x, int y) {
     if (screen->board[y][x].number != 0 && screen->board[y][x].number != 0) {
         return 0;
     } else {
-        // Adds piece to the board
         screen->board[y][x] = piece;
         return 1;
     }
@@ -515,12 +514,12 @@ void initialise_save_file(char** deckLocation, char* fileName, FILE** gameFile,
     intiailise_player_hands(player1, player2, read_line(*gameFile), 
             read_line(*gameFile));
     int placedPieces = check_saved_screen(screen, gameFile);
-    if((placedPieces + 11) != atoi(firstLine[2]) || atoi(firstLine[2]) < 11) {
+    if (placedPieces > 11 && placedPieces + 11 != atoi(firstLine[2])) {
         fprintf(stderr, "Unable to parse savefile\n");
         fclose(*gameFile);
         exit(4);
     } 
-    for(int i = 0; i < atoi(firstLine[2]); i++) {
+    for (int i = 0; i < atoi(firstLine[2]); i++) {
         draw_from_deck(deck);
     }
     free(readLine);
@@ -529,7 +528,7 @@ void initialise_save_file(char** deckLocation, char* fileName, FILE** gameFile,
 //<==============PLAYER AND MAIN GAME==========
 
 /** 
-*   //TODO
+*   Switches between players 1 and 2
 */
 void switch_player(Player* player1, Player* player2, int* currentPlayer) {
     if (player1->currentPlayer) {
@@ -591,7 +590,6 @@ int process_user_input(char** returnedString, Screen* screen, Player* player,
     int column = atoi(returnedString[1]) - 1;
     int row = atoi(returnedString[2]) - 1;
     Piece** board = screen->board;
-    //TODO: shorten this
     if (cardsPlayed > 0) {
         if (row == screen->rowSize - 1 && board[0][column].number != 0) {
         } else if (column == screen->columnSize - 1 && 
@@ -686,7 +684,7 @@ int is_game_over(Screen* screen, Deck* deck) {
     } else {
         for (int i = 0; i < screen->rowSize; i++) {
             for (int j = 0; j < screen->columnSize; j++) {
-                if (board[i][j].number == 0 && board[i][j].letter == 0) {
+                if (board[i][j].number == 0) {
                     return 0;
                 } 
             }
@@ -771,7 +769,7 @@ int is_board_full(Screen* screen) {
     Piece** board = screen->board;
     for (int i = 0; i < screen->rowSize; i++) {
         for (int j = 0; j < screen->columnSize; j++) {
-            if (board[i][j].number != 0) {
+            if (board[i][j].number > 0 && board[i][j].number < 10) {
                 return 0;
             }
         }
@@ -780,10 +778,10 @@ int is_board_full(Screen* screen) {
 }
 
 /** 
-*   //TODO
+*   Checks if the position is empty
 */
 int is_empty_position(Piece** board, int* column, int* row) {
-    if (board[*row][*column].number != 0) {
+    if (board[*row][*column].number > 0 && board[*row][*column].number < 10) {
         return 0;
     } else {
         return 1;
@@ -798,25 +796,35 @@ void automated_move_player_2(Screen* screen, int* column, int* row) {
     Piece** board = screen->board;
     while (1) {
         if (is_empty_position(board, column, row)) {
-            if (board[*row - 1][*column].number != 0) {
+            if (*row > 0 && board[*row - 1][*column].number != 0) {
                 break;
-            } else if (board[*row][*column - 1].number != 0) {
+            } 
+            if (*column > 0 && 
+                    board[*row][*column - 1].number != 0) {
                 break;
-            } else if (board[*row][*column + 1].number != 0) {
+            } 
+            if (*column < screen->columnSize - 1 &&
+                    board[*row][*column + 1].number > 0 && 
+                    board[*row][*column + 1].number < 9) {
                 break;
-            } else if (*row > screen->rowSize - 1 && 
+            } 
+            if (*row < screen->rowSize - 1 && 
                     board[*row + 1][*column].number != 0) {
                 break;
-            } else if (*column - 1 == 0 && 
+            } 
+            if (*column - 1 == 0 && 
                     board[*row][*column].number != 0) {
                 break;
-            } else if (*column + 1 == screen->columnSize && 
+            } 
+            if (*column + 1 == screen->columnSize && 
                     board[*row][0].number != 0) {
                 break;
-            } else if (*row == screen->rowSize - 1 && 
+            } 
+            if (*row == screen->rowSize - 1 && 
                     board[0][*column].number != 0) {
                 break;
-            } else if (*column == screen->columnSize - 1 && 
+            } 
+            if (*column == screen->columnSize - 1 && 
                     board[0][*column].number != 0) {
                 break;
             }
@@ -838,22 +846,30 @@ void automated_move_player_1(Screen* screen, int* column, int* row) {
     Piece** board = screen->board;
     while (1) {
         if (is_empty_position(board, column, row)) {
-            if (board[*row + 1][*column].number != 0) {
+            if (*row < screen->rowSize - 1 && 
+                    board[*row + 1][*column].number != 0) {
                 break;
-            } else if (board[*row][*column + 1].number != 0) {
+            }
+            if (*column < screen->columnSize - 1 && 
+                    board[*row][*column + 1].number != 0) {
                 break;
-                //Above
-            } else if (*row > 0 && board[*row - 1][*column].number != 0) {
+            }   
+            if (*row > 0 && board[*row - 1][*column].number != 0) {
                 break;
-            } else if (board[*row][*column - 1].number != 0) {
+            }
+            if (*column > 0 &&
+                    board[*row][*column - 1].number != 0) {
                 break;
-            } else if (*column == screen->columnSize - 1 && 
+            }
+            if (*column == screen->columnSize - 1 && 
                     board[*row][0].number != 0) {
                 break;
-            } else if (*row == 0 && 
+            }
+            if (*row == 0 && 
                     board[screen->rowSize - 1][*column].number != 0) {
                 break;
-            } else if (*column == 0 && 
+            }
+            if (*column == 0 && 
                     board[*row][screen->columnSize - 1].number != 0) {
                 break;
             }
@@ -868,12 +884,12 @@ void automated_move_player_1(Screen* screen, int* column, int* row) {
 }
 
 /** 
-*   //TODO
+*   Automated move loop for AI players
 */
 void automated_move(Screen* screen, Player* player, int movingPlayer) {
     int column = 0;
     int row = 0;
-    if(is_board_full(screen)) {
+    if(is_board_full(screen) == 1) {
         column = screen->columnSize / 2;
         row = screen->rowSize / 2;
         if (screen->columnSize % 2 != 0) {
@@ -900,11 +916,11 @@ void automated_move(Screen* screen, Player* player, int movingPlayer) {
     printf("Player %d plays %d%c in column %d row %d\n", movingPlayer, 
             player->playerHand[0].number, player->playerHand[0].letter, 
             column, row);
-    remove_player_piece(player, 0);
+    remove_player_piece(player, 0);;
 }
 
 /**
-*   //TODO
+*   The main loop for the game, breaks when the board is full or deck size is 0
 */
 void main_game_loop(char* deckLocation, Screen* screen, Player* player1, 
         Player* player2, Deck* deck) {
@@ -921,8 +937,8 @@ void main_game_loop(char* deckLocation, Screen* screen, Player* player1,
         } else {
             currentPlayer = get_current_player(player1, player2, movingPlayer);
             print_screen(screen);
-            fflush(stdout);
             if (currentPlayer->handSize != 6) {
+                
                 deal_to_player(currentPlayer, deck);
             }
             if (currentPlayer->type == 'a') {
@@ -932,7 +948,7 @@ void main_game_loop(char* deckLocation, Screen* screen, Player* player1,
                 print_player_hand(currentPlayer, movingPlayer);
                 char* saveName;
                 if (process_manual_move(&saveName, screen, currentPlayer, deck,
-                        cardsPlayed) == 1) {
+                        cardsPlayed) == 1) { 
                     save_file(deckLocation, screen, deck, player1, player2, 
                             cardsPlayed, movingPlayer, saveName);
                     process_manual_move(&saveName, screen, currentPlayer, deck,
@@ -940,77 +956,91 @@ void main_game_loop(char* deckLocation, Screen* screen, Player* player1,
                 }
             }
             switch_player(player1, player2, &movingPlayer);
-            cardsPlayed++;    
+            cardsPlayed++;   
         }
     }
 }
 
 
+/**
+*   Recursive pathfinding algorithm
+*/
 void find_longest_path(int originalRow, int originalColumn, int pathSize,
         Screen screen, int* biggestSize, char suit) {
     pathSize++;
-    int right;
-    int left;
-    int below;
-    int above;
-
+    int right, left, below, above;
     if (originalRow == screen.rowSize - 1) {
         below = 0;
     } else {
         below = originalRow + 1;
     }
-
     if (originalRow == 0) {
         above = screen.rowSize - 1;
     } else {
         above = originalRow - 1;
     }
-
     if (originalColumn == screen.columnSize - 1) {
         right = 0;
     } else {
         right = originalColumn + 1;
     }
-
-    if (originalRow == 0) {
+    if (originalColumn == 0) {
         left = screen.rowSize - 1;
     } else {
         left = originalColumn - 1;
     }
 
-    /*
-    (int originalRow, int originalColumn, int pathSize,
-        Screen screen, int* biggestSize, char suit) {
-    */
-    
     if (pathSize > *biggestSize 
             && screen.board[originalRow][originalColumn].letter == suit) {
+        //printf("MATCHEDAAAA %d%c PathSize %d\n", screen.board[originalRow][originalColumn].number, screen.board[originalRow][originalColumn].letter,
+                //pathSize);
         *biggestSize = pathSize;
     } 
-
     if (screen.board[below][originalColumn].number > 
             screen.board[originalRow][originalColumn].number) {
+        //printf("BELOW %d%c %d\n", screen.board[below][originalColumn].number, screen.board[below][originalColumn].letter, pathSize);
         find_longest_path(below, originalColumn, pathSize, screen, biggestSize,
-            suit);
+                suit);
     } 
-
     if (screen.board[originalRow][right].number > 
             screen.board[originalRow][originalColumn].number) {
-        find_longest_path(right, originalColumn, pathSize, screen, biggestSize,
-            suit);
+        //printf("RIGHT %d%c %d\n", screen.board[originalRow][right].number, screen.board[originalRow][right].letter, pathSize);
+        find_longest_path(originalRow, right, pathSize, screen, biggestSize,
+                suit);
     } 
-
     if (screen.board[above][originalColumn].number > 
             screen.board[originalRow][originalColumn].number) {
+        //printf("ABOVE %d%c %d\n", screen.board[above][originalColumn].number, screen.board[above][originalColumn].letter, pathSize);
         find_longest_path(above, originalColumn, pathSize, screen, biggestSize,
-            suit);
+                suit);
     } 
-
     if (screen.board[originalRow][left].number > 
-            screen.board[originalRow][left].number) {
-        find_longest_path(left, originalColumn, pathSize, screen, biggestSize,
-            suit);
+            screen.board[originalRow][originalColumn].number) {
+        //printf("LEFT %d%c %d\n", screen.board[originalRow][left].number, screen.board[originalRow][left].letter, pathSize);
+        find_longest_path(originalRow, left, pathSize, screen, biggestSize,
+                suit);
     } 
+}
+
+/**
+*  Calculatese the scores of each player by going through 
+*   each value in the matrix.
+*/
+void calculate_scores(int* player1score, int* player2score, Screen screen) {
+    for (int i = 0; i < screen.rowSize; i++) {
+        for (int j = 0; j < screen.columnSize; j++) {
+            if (screen.board[i][j].number != 0 && 
+                    screen.board[i][j].letter % 2 != 0) {
+                find_longest_path(i, j, 0, screen, player1score, 
+                        screen.board[i][j].letter);
+            }
+            if (screen.board[i][j].number != 0 && 
+                    screen.board[i][j].letter % 2 == 0) {
+                find_longest_path(i, j, 0, screen, player2score, 
+                        screen.board[i][j].letter);
+            }
+        }
+    }
 }
 
 /**
@@ -1025,7 +1055,6 @@ int main(int argc, char** argv) {
     FILE* gameFile;
     FILE* deckFile;
     char* deckLocation;
-    // New Game 
     if (argc == 6) {
         screen.columnSize = atoi(argv[2]);
         screen.rowSize = atoi(argv[3]);
@@ -1034,20 +1063,16 @@ int main(int argc, char** argv) {
         fflush(stdout);
         deckLocation = argv[1];
         player1.handSize = 0;
-        player1.playerHand = malloc(sizeof(Piece) * 6);        
-        deal_to_player(&player1, &deck);
-        deal_to_player(&player1, &deck);
-        deal_to_player(&player1, &deck);
-        deal_to_player(&player1, &deck);
-        deal_to_player(&player1, &deck);    
+        player1.playerHand = malloc(sizeof(Piece) * 6);  
+        for (int i = 0; i < 5; i++) {
+            deal_to_player(&player1, &deck);
+        }             
         player1.currentPlayer = 1;
         player2.handSize = 0;
-        player2.playerHand = malloc(sizeof(Piece) * 6);        
-        deal_to_player(&player2, &deck);
-        deal_to_player(&player2, &deck);
-        deal_to_player(&player2, &deck);
-        deal_to_player(&player2, &deck);
-        deal_to_player(&player2, &deck);    
+        player2.playerHand = malloc(sizeof(Piece) * 6); 
+        for (int i = 0; i < 5; i++) {
+            deal_to_player(&player2, &deck);
+        }       
         player2.currentPlayer = 1;
     } else {
         initialise_save_file(&deckLocation, argv[1], &gameFile, &deckFile, 
@@ -1055,11 +1080,9 @@ int main(int argc, char** argv) {
     }
     main_game_loop(deckLocation, &screen, &player1, &player2, &deck);
     print_screen(&screen);
-    printf("Player 1=%d Player 2=%d\n", 4, 4);
-    // free(deck.deckPile);
-    // free(player1.playerHand);
-    // free(player2.playerHand);
-    // free(deckLocation);
-    // free_board(&screen);
-    return 0;
+    int player1score = 1;
+    int player2score = 1;
+    calculate_scores(&player1score, &player2score, screen);
+    printf("Player 1=%d Player 2=%d\n", player1score, player2score);
+    exit(0);
 }
