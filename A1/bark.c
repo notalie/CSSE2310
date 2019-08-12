@@ -68,12 +68,11 @@ void print_screen(Screen* screen) {
     for (int i = 0; i < screen->rowSize; i++) {
         for (int j = 0; j < screen->columnSize; j++) {
             if (board[i][j].number != 0 && board[i][j].letter != 0) {
-                printf("%d%c", board[i][j].number, 
-                    board[i][j].letter);
+                printf("%d%c", board[i][j].number, board[i][j].letter);
             } else {
                 printf("..");
             }
-            if (j == screen->columnSize-1) {
+            if (j == screen->columnSize - 1) {
                 printf("\n");
             } 
         }
@@ -88,7 +87,7 @@ void print_screen(Screen* screen) {
 void free_board(Screen* screen) {
     for (int i = 0; i < screen->rowSize; i++) {
         free(screen->board[i]);   
-     } 
+    } 
     free(screen->board);
 }
 
@@ -105,7 +104,7 @@ int add_piece(Screen* screen, Piece piece, int x, int y) {
     //Piece is in a place that already has a piece
     if (screen->board[y][x].number != 0 && screen->board[y][x].number != 0) {
         return 0;
-    } else{
+    } else {
         // Adds piece to the board
         screen->board[y][x] = piece;
         return 1;
@@ -116,7 +115,7 @@ int add_piece(Screen* screen, Piece piece, int x, int y) {
 *   Sets player types to be either a for automated or h for user input (stdin)
 */
 void initialise_player_types(Player* player1, Player* player2, 
-    int amountOfInputs, char** inputs) {
+        int amountOfInputs, char** inputs) {
     if (amountOfInputs == 6) {
         player1->type = inputs[4][0];
         player2->type = inputs[5][0];
@@ -134,27 +133,27 @@ void initialise_player_types(Player* player1, Player* player2,
 *   exit with status 1, if the formatting is incorrect, exit with status 2
 */
 void check_arg_types(int amountOfInputs, char** inputs, Player* player1, 
-    Player* player2) {
+        Player* player2) {
     if (amountOfInputs != 6 && amountOfInputs != 4) {
         fprintf(stderr, "Usage: bark savefile p1type p2type\n"
-            "bark deck width height p1type p2type\n");
+                "bark deck width height p1type p2type\n");
         exit(1);
     } else if (amountOfInputs == 6 && (atoi(inputs[2]) < 3 || 
-        atoi(inputs[2]) > 100|| atoi(inputs[3]) < 3 || 
+            atoi(inputs[2]) > 100 || atoi(inputs[3]) < 3 || 
             atoi(inputs[3]) > 100)) {
         fprintf(stderr, "Incorrect arg types\n");
         exit(2);
     } else if (amountOfInputs == 6 && ((strcmp(inputs[4], "a") && 
-        strcmp(inputs[4], "h")) || (strcmp(inputs[5], "a") && 
+            strcmp(inputs[4], "h")) || (strcmp(inputs[5], "a") && 
             strcmp(inputs[5], "h")))) {
         fprintf(stderr, "Incorrect arg types\n");
         exit(2);
     } else if (amountOfInputs == 4 && ((strcmp(inputs[2], "a") 
-        && strcmp(inputs[2], "h")) || (strcmp(inputs[3], "a") && 
+            && strcmp(inputs[2], "h")) || (strcmp(inputs[3], "a") && 
             strcmp(inputs[3], "h")))) { 
         fprintf(stderr, "Incorrect arg types\n");
         exit(2);
-    } else{
+    } else {
         // If all inputs are correct, initialise players
         initialise_player_types(player1, player2, amountOfInputs, inputs);
     }
@@ -234,7 +233,10 @@ void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
     if (actualDeckSize != readDeckSize) {
         fprintf(stderr, "Unable to parse deckfile\n");
         exit(3);
-    } else if(actualDeckSize < 11) {
+    } else if (actualDeckSize <= 0) {
+        fprintf(stderr, "Unable to parse deckfile\n");
+        exit(3);
+    } else if (actualDeckSize < 11) {
         fprintf(stderr, "Short Deck\n");
         exit(5);
     } else {
@@ -248,9 +250,10 @@ void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
         for (int i = 0; i < actualDeckSize; i++) {
             readLine = read_line(*deckFile); 
             if (readLine[1] > 90 || readLine[1] < 65 || readLine[0] < 49 || 
-                readLine[0] > 57 || (readLine[2] != 32 && readLine[2] != 0)) {
+                    readLine[0] > 57 || (readLine[2] != 32 
+                    && readLine[2] != 0)) {
                 free(deck->deckPile);
-                fprintf(stderr, "%s","Unable to parse deckfile\n");
+                fprintf(stderr, "%s", "Unable to parse deckfile\n");
                 fclose(*deckFile);
                 free(readLine);
                 exit(3);
@@ -264,7 +267,8 @@ void initialise_deck_file(char* fileName, FILE** deckFile, Deck* deck) {
 }
 
 /**
-*   //TODO
+*   Splits the string by the corresponding split value and returns the 
+*   string array. It also modifies a value which is the array size
 */
 char** string_split(char* stringToSplit, char splitValue, int* arraySize) {
     int amountOfStrings = 0, currentStringSize = 0;
@@ -273,12 +277,12 @@ char** string_split(char* stringToSplit, char splitValue, int* arraySize) {
     stringToReturn = malloc(sizeof(char));
     int stringSize = strlen(stringToSplit);
     for (int i = 0; i < stringSize; i++) {
-        if (stringToSplit[i] == splitValue && stringToSplit[i+1] 
-            != splitValue) {
+        if (stringToSplit[i] == splitValue && stringToSplit[i + 1] 
+                != splitValue) {
             stringToReturn = realloc(stringToReturn, sizeof(char) * 
-                (amountOfStrings+1));
+                    (amountOfStrings + 1));
             stringToReturn[amountOfStrings] = malloc(sizeof(char) * 
-                currentStringSize);
+                    currentStringSize);
             currentString[currentStringSize] = '\0';
             stringToReturn[amountOfStrings] = currentString;
             amountOfStrings++;
@@ -286,16 +290,16 @@ char** string_split(char* stringToSplit, char splitValue, int* arraySize) {
             currentStringSize = 0;
         } else {
             currentString = realloc(currentString, sizeof(char) * 
-                currentStringSize+1);
+                    currentStringSize + 1);
             currentString[currentStringSize] = stringToSplit[i];
             currentStringSize++;
         }
     }
     if (currentString != 0) {
-         stringToReturn = realloc(stringToReturn, sizeof(char) * 
-            (amountOfStrings+1));
+        stringToReturn = realloc(stringToReturn, sizeof(char) * 
+                (amountOfStrings + 1));
         stringToReturn[amountOfStrings] = malloc(sizeof(char) * 
-            currentStringSize);
+                currentStringSize);
         stringToReturn[amountOfStrings] = currentString;
         amountOfStrings++;
     }
@@ -309,7 +313,7 @@ char** string_split(char* stringToSplit, char splitValue, int* arraySize) {
 */
 void free_string(char** stringToFree, int arraySize) {
     for (int i = 0; i < arraySize; i++) {
-            free(stringToFree[i]);
+        free(stringToFree[i]);
     }
     free(stringToFree);
 } 
@@ -324,8 +328,8 @@ char** check_first_save_line(char* lineToCheck, FILE** gameFile) {
     //Check for things that aren't null, space or numbers
     for (int i = 0; i < lineSize; i++) {
         if (lineToCheck[i] > 58 || lineToCheck[i] < 48) {
-            if ((lineToCheck[i] == 32 && lineToCheck[i+1] == 32) || 
-                lineToCheck[i] != 32) {
+            if ((lineToCheck[i] == 32 && lineToCheck[i + 1] == 32) || 
+                    lineToCheck[i] != 32) {
                 fprintf(stderr, "Unable to parse savefile\n");
                 exit(4);
             }
@@ -333,8 +337,8 @@ char** check_first_save_line(char* lineToCheck, FILE** gameFile) {
     }
     char** returnedString = string_split(lineToCheck, ' ', &arraySize);
     if (atoi(returnedString[0]) > 100 || atoi(returnedString[0]) < 3 ||
-        atoi(returnedString[1]) > 100 || atoi(returnedString[1]) < 3 ||
-        arraySize != 4) {
+            atoi(returnedString[1]) > 100 || atoi(returnedString[1]) < 3 ||
+            arraySize != 4) {
         free_string(returnedString, arraySize);
         fprintf(stderr, "Unable to parse savefile\n");
         exit(4);
@@ -351,8 +355,8 @@ char** check_first_save_line(char* lineToCheck, FILE** gameFile) {
 */
 void intialise_player_hand(Player* player, int playerLineLength, char* line) {
     int counter = 0;
-    for (int i = 0; i < playerLineLength*2; i++) {
-        if (i%2 == 0) {
+    for (int i = 0; i < playerLineLength * 2; i++) {
+        if (i % 2 == 0) {
             if (line[i] < 49 || line[i] > 57) {
                 fprintf(stderr, "Unable to parse savefile\n");
                 exit(4);
@@ -363,7 +367,7 @@ void intialise_player_hand(Player* player, int playerLineLength, char* line) {
                 fprintf(stderr, "Unable to parse savefile\n");
                 exit(4);
             } else {
-                player->playerHand[counter].number = atoi(&line[i-1]);
+                player->playerHand[counter].number = atoi(&line[i - 1]);
                 player->playerHand[counter].letter = line[i];
                 counter++;
             }
@@ -372,18 +376,22 @@ void intialise_player_hand(Player* player, int playerLineLength, char* line) {
 }
 
 /**
-*   //TODO
+*   Draws a card from the corresponding deck and shuffles it down.
+*   Once the shuffling is complete, return the top piece
 */
 Piece draw_from_deck(Deck* deck) {
     Piece topPiece = deck->deckPile[0];
     for (int i = 0; i < deck->deckSize; i++) {
-        deck->deckPile[i] = deck->deckPile[i+1];
+        deck->deckPile[i] = deck->deckPile[i + 1];
     }
     (deck->deckSize)--;
     deck->deckPile = realloc(deck->deckPile, sizeof(Piece) * deck->deckSize);
     return topPiece;
 }
 
+/**
+*   Deals a card to the corresponding player
+*/
 void deal_to_player(Player* player, Deck* deck) {
     player->playerHand[player->handSize] = draw_from_deck(deck);
     (player->handSize)++;
@@ -393,9 +401,9 @@ void deal_to_player(Player* player, Deck* deck) {
 *   Sets player 1 and player 2 hands to be set by the lines given
 */
 void intiailise_player_hands(Player* player1, Player* player2, 
-    char* player2Hand, char* player1Hand) {
-    int player1LineLength = strlen(player1Hand)/2;
-    int player2LineLength = strlen(player2Hand)/2;
+        char* player2Hand, char* player1Hand) {
+    int player1LineLength = strlen(player1Hand) / 2;
+    int player2LineLength = strlen(player2Hand) / 2;
     if (player1->currentPlayer && player1LineLength != 6) {
         fprintf(stderr, "Unable to parse savefile\n");
         exit(4);
@@ -421,8 +429,8 @@ void intiailise_player_hands(Player* player1, Player* player2,
 */
 int initialise_read_screen(Screen* screen, char* line, int row, int* pieces) {
     int isBoardFull = 1;
-    for (int i = 0; i < screen->columnSize*2; i++) {
-        if (i%2 == 0) {
+    for (int i = 0; i < screen->columnSize * 2; i++) {
+        if (i % 2 == 0) {
             if (line[i] != 42 && (line[i] < 49 || line[i] > 57)) {
                 fprintf(stderr, "Unable to parse savefile\n");
                 exit(4);
@@ -432,10 +440,10 @@ int initialise_read_screen(Screen* screen, char* line, int row, int* pieces) {
                 fprintf(stderr, "Unable to parse savefile\n");
                 exit(4);
             } else if (line[i] != 42) {
-                screen->board[row][i/2].number = atoi(&line[i-1]);
-                screen->board[row][i/2].letter = line[i];
-            } else if ((line[i] == 42 && line[i-1] != 42) ||
-                (line[i-1] == 42 && line[i] != 42)) {
+                screen->board[row][i / 2].number = atoi(&line[i - 1]);
+                screen->board[row][i / 2].letter = line[i];
+            } else if ((line[i] == 42 && line[i - 1] != 42) ||
+                    (line[i - 1] == 42 && line[i] != 42)) {
                 fprintf(stderr, "Unable to parse savefile\n");
                 exit(4);
             } else if (line[i] == 42) {
@@ -452,13 +460,12 @@ int initialise_read_screen(Screen* screen, char* line, int row, int* pieces) {
 *   specificed length and is not full.
 */
 int check_saved_screen(Screen* screen, FILE** gameFile) {
-    int boardIsFull;
+    int boardIsFull = 0;
     int pieces = 0;
     for (int i = 0; i < screen->rowSize; i++) {
-        boardIsFull += initialise_read_screen(screen, read_line(*gameFile), i,
-            &pieces);
-        //TODO: this is returning 5 every time not sure why
-        printf("%d\n", boardIsFull);
+        if(initialise_read_screen(screen, read_line(*gameFile), i, &pieces)) {
+            boardIsFull++;
+        }
     }
     if (read_line(*gameFile)[0] != 0) {
         fclose(*gameFile);
@@ -476,8 +483,9 @@ int check_saved_screen(Screen* screen, FILE** gameFile) {
 *   Initialises the save file, if it is invalid, exit with code 4, 
 *   if it is not, start parsing it, set active players
 */
-void initialise_save_file(char* fileName, FILE** gameFile, FILE** deckFile,
-    Player* player1, Player* player2, Screen* screen, Deck* deck) {
+void initialise_save_file(char** deckLocation, char* fileName, FILE** gameFile,
+        FILE** deckFile, Player* player1, Player* player2, 
+        Screen* screen, Deck* deck) {
     char* readLine;
     *gameFile = fopen(fileName, "r");
     if (*gameFile == NULL) {
@@ -502,15 +510,16 @@ void initialise_save_file(char* fileName, FILE** gameFile, FILE** deckFile,
         player2->currentPlayer = 1;
     } 
     readLine = read_line(*gameFile);
+    *deckLocation = readLine;
     initialise_deck_file(readLine, deckFile, deck);
     intiailise_player_hands(player1, player2, read_line(*gameFile), 
-        read_line(*gameFile));
+            read_line(*gameFile));
     int placedPieces = check_saved_screen(screen, gameFile);
-    if((placedPieces + 11) != atoi(firstLine[2])) {
+    if((placedPieces + 11) != atoi(firstLine[2]) || atoi(firstLine[2]) < 11) {
         fprintf(stderr, "Unable to parse savefile\n");
         fclose(*gameFile);
         exit(4);
-    }
+    } 
     for(int i = 0; i < atoi(firstLine[2]); i++) {
         draw_from_deck(deck);
     }
@@ -538,7 +547,7 @@ void switch_player(Player* player1, Player* player2, int* currentPlayer) {
 *   //TODO
 */
 Player* get_current_player(Player* player1, Player* player2, 
-    int currentPlayer) {
+        int currentPlayer) {
     if (currentPlayer == 1) {
         return player1;
     } else {
@@ -551,7 +560,7 @@ Player* get_current_player(Player* player1, Player* player2,
 */
 void remove_player_piece(Player* player, int index) {
     for (int i = 0; i < player->handSize; i++) {
-        player->playerHand[index+i] = player->playerHand[index+i+1];
+        player->playerHand[index + i] = player->playerHand[index + i + 1];
     }
     (player->handSize)--;
 }
@@ -560,12 +569,12 @@ void remove_player_piece(Player* player, int index) {
 *   //TODO: might change on spec
 */
 int process_user_input(char** returnedString, Screen* screen, Player* player, 
-    int cardsPlayed) {
+        int cardsPlayed) {
     //Check every input is only a number with no space
     for (int i = 0; i < 3; i++) {
         int stringLength = strlen(returnedString[i]);
         for (int j = 0; j < stringLength; j++) {
-            if( returnedString[i][j] == 32) {
+            if (returnedString[i][j] == 32) {
                 return 0;
             }
         }        
@@ -573,15 +582,39 @@ int process_user_input(char** returnedString, Screen* screen, Player* player,
     if (returnedString[0][0] > 54 || returnedString[0][0] < 49) {
         return 0;
     } else if (atoi(returnedString[1]) > screen->columnSize || 
-        atoi(returnedString[1]) < 1) {
+            atoi(returnedString[1]) < 1) {
         return 0;
     } else if (atoi(returnedString[2]) > screen->rowSize || 
-        atoi(returnedString[2]) < 1) {
+            atoi(returnedString[2]) < 1) {
         return 0;
     } 
-    if (add_piece(screen, player->playerHand[atoi(returnedString[0])-1], 
-        atoi(returnedString[1]),atoi(returnedString[2]))) {
-        remove_player_piece(player, atoi(returnedString[0])-1);
+    int column = atoi(returnedString[1]) - 1;
+    int row = atoi(returnedString[2]) - 1;
+    Piece** board = screen->board;
+    //TODO: shorten this
+    if (cardsPlayed > 0) {
+        if (row == screen->rowSize - 1 && board[0][column].number != 0) {
+        } else if (column == screen->columnSize - 1 && 
+                board[row][0].number != 0) {
+        } else if (row == 0 && 
+                board[screen->rowSize - 1][column].number != 0) {
+        } else if (column == 0 && 
+                board[row][screen->columnSize - 1].number != 0) {
+        } else if (row < screen->rowSize - 1 &&
+                board[row + 1][column].number != 0) {   //Below
+        } else if (column < screen->columnSize - 1 && 
+                board[row][column + 1].number != 0) {    //Right
+        } else if (column > 0 && 
+                board[row][column - 1].number != 0) {    //Left
+        } else if (row > 0 && 
+                board[row - 1][column].number != 0) {    //Above
+        } else {
+            return 0;
+        }
+    }
+    if (add_piece(screen, player->playerHand[atoi(returnedString[0]) - 1], 
+            atoi(returnedString[1]), atoi(returnedString[2])) == 1) {
+        remove_player_piece(player, atoi(returnedString[0]) - 1);
         return 1;
     } else {
         return 0;
@@ -608,42 +641,38 @@ int is_save_file_line(char* line) {
 *   //TODO
 */
 int process_manual_move(char** saveFileName, Screen* screen, Player* player,
-    Deck* deck, int cardsPlayed) {
+        Deck* deck, int cardsPlayed) {
     char* userInput = malloc(sizeof(char) * 80);
     while (1) {
         printf("Move? ");
+        fflush(stdout);
         userInput = fgets(userInput, 80, stdin);
         if (userInput == NULL) {
-            fprintf(stderr, "End of input\n");
+            fprintf(stderr, "End of input\n"); 
             exit(7);
         } else {
             int inputSize = 0;
             char** returnedString = string_split(userInput, ' ', &inputSize);
-            // If input is 1 long and savezzzzz is valid, return 1
-            //TODO: see if spaces are valid input
-            if (is_save_file_line(userInput)) {
+            if (is_save_file_line(userInput) == 1) {
+                int userInputSize = strlen(userInput);
+                *saveFileName = malloc(sizeof(char) * userInputSize);
                 *saveFileName = userInput;
                 return 1;
             }
             if (inputSize != 3) {
                 //Repeat if invalid move
-                process_manual_move(saveFileName, screen, player, deck, 
-                    cardsPlayed);
+                continue;
             } else {
-                int successfulMove;
+                int successfulMove = 1;
                 //Index for user, check valid inputs
                 successfulMove = process_user_input(returnedString, screen, 
-                    player, cardsPlayed);
-                if(!successfulMove) {
-                    process_manual_move(saveFileName, screen, player, deck, 
-                        cardsPlayed);
-                } else {
+                        player, cardsPlayed);
+                if (successfulMove) {
                     break;
-                }
+                } 
             }
         }
     }
-    free(userInput);
     return 0;
 }
 
@@ -667,13 +696,18 @@ int is_game_over(Screen* screen, Deck* deck) {
 }
 
 /**
-*   //TODO
+*   Prints the player's hand, if the moving player is 3, print the hand of the
+*   automated player removing the () part
 */
 void print_player_hand(Player* player, int movingPlayer) {
-    printf("Hand(%d): ", movingPlayer);
-    for(int i = 0; i < player->handSize; i++) {
+    if (movingPlayer == 3) {
+        printf("Hand: ");
+    } else {
+        printf("Hand(%d): ", movingPlayer);
+    }
+    for (int i = 0; i < player->handSize; i++) {
         printf("%d%c", player->playerHand[i].number, 
-            player->playerHand[i].letter);
+                player->playerHand[i].letter);
         if (i + 1 == player->handSize) {
             printf("\n");
         } else {
@@ -683,56 +717,300 @@ void print_player_hand(Player* player, int movingPlayer) {
 }
 
 /**
+*   Saves the file according the specifications set by the spec
+*/
+void save_file(char* deckLocation, Screen* screen, Deck* deck, Player* player1,
+        Player* player2, int cardsPlayed, int movingPlayer, 
+        char* fileName) {
+    char* another = malloc(sizeof(char) * (strlen(fileName) - 5));
+    for (int i = 0; i < strlen(fileName) - 5; i++) {
+        another[i] = fileName[4 + i];
+    }
+    if(player2->handSize == 6 && movingPlayer != 2) {
+        player2->handSize = 5;
+    } else {
+        player1->handSize = 5;
+    }
+    another[strlen(another)] = '\0';
+    FILE* saveFile = fopen(another, "w");
+    fprintf(saveFile, "%d %d %d %d\n", screen->columnSize, screen->rowSize,
+            cardsPlayed + 11, movingPlayer);
+    fprintf(saveFile, "%s\n", deckLocation);
+    for (int i = 0; i < player1->handSize; i++) {
+        fprintf(saveFile, "%d%c", player1->playerHand[i].number, 
+                player1->playerHand[i].letter);
+    }
+    fprintf(saveFile, "\n");
+    for (int i = 0; i < player2->handSize; i++) {
+        fprintf(saveFile, "%d%c", player2->playerHand[i].number, 
+                player2->playerHand[i].letter);
+    }
+    fprintf(saveFile, "\n");
+    Piece** board = screen->board;
+    for (int i = 0; i < screen->rowSize; i++) {
+        for (int j = 0; j < screen->columnSize; j++) {
+            if (board[i][j].number != 0 && board[i][j].letter != 0) {
+                fprintf(saveFile, "%d%c", board[i][j].number, 
+                        board[i][j].letter);
+            } else {
+                fprintf(saveFile, "**");
+            }
+            if (j == screen->columnSize - 1) {
+                fprintf(saveFile, "\n");
+            } 
+        }
+    }
+    fclose(saveFile);
+}
+
+
+/** 
+*   Checks if the board is full by returning 0 when a valid piece is found
+*/
+int is_board_full(Screen* screen) {
+    Piece** board = screen->board;
+    for (int i = 0; i < screen->rowSize; i++) {
+        for (int j = 0; j < screen->columnSize; j++) {
+            if (board[i][j].number != 0) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+/** 
 *   //TODO
 */
-void save_file(Screen* screen, Deck* deck, Player* player1, Player* player2, 
-    int cardsPlayed, int movingPlayer, char* fileName) {
-    FILE* savePointer = fopen(fileName, "w");
-    fprintf(savePointer, "%d %d %d %d\n", screen->columnSize, screen->rowSize,
-        cardsPlayed, movingPlayer);
-    fclose(savePointer);
-    exit(1);
+int is_empty_position(Piece** board, int* column, int* row) {
+    if (board[*row][*column].number != 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+
+} 
+
+/** 
+*   //TODO
+*/
+void automated_move_player_2(Screen* screen, int* column, int* row) {
+    Piece** board = screen->board;
+    while (1) {
+        if (is_empty_position(board, column, row)) {
+            if (board[*row - 1][*column].number != 0) {
+                break;
+            } else if (board[*row][*column - 1].number != 0) {
+                break;
+            } else if (board[*row][*column + 1].number != 0) {
+                break;
+            } else if (*row > screen->rowSize - 1 && 
+                    board[*row + 1][*column].number != 0) {
+                break;
+            } else if (*column - 1 == 0 && 
+                    board[*row][*column].number != 0) {
+                break;
+            } else if (*column + 1 == screen->columnSize && 
+                    board[*row][0].number != 0) {
+                break;
+            } else if (*row == screen->rowSize - 1 && 
+                    board[0][*column].number != 0) {
+                break;
+            } else if (*column == screen->columnSize - 1 && 
+                    board[0][*column].number != 0) {
+                break;
+            }
+        }
+        if (*column - 1 == -1) {
+            *(column) = screen->columnSize - 1;
+            (*row)--;
+        } else {
+            (*column)--;
+        }
+    }
+}
+
+/** 
+*   Automated player move for player 1
+*   start from the top and moves right then down
+*/
+void automated_move_player_1(Screen* screen, int* column, int* row) {
+    Piece** board = screen->board;
+    while (1) {
+        if (is_empty_position(board, column, row)) {
+            if (board[*row + 1][*column].number != 0) {
+                break;
+            } else if (board[*row][*column + 1].number != 0) {
+                break;
+                //Above
+            } else if (*row > 0 && board[*row - 1][*column].number != 0) {
+                break;
+            } else if (board[*row][*column - 1].number != 0) {
+                break;
+            } else if (*column == screen->columnSize - 1 && 
+                    board[*row][0].number != 0) {
+                break;
+            } else if (*row == 0 && 
+                    board[screen->rowSize - 1][*column].number != 0) {
+                break;
+            } else if (*column == 0 && 
+                    board[*row][screen->columnSize - 1].number != 0) {
+                break;
+            }
+        }
+        if (*column + 1 == screen->columnSize) {
+            *column = 0;
+            (*row)++;
+        } else {
+            (*column)++;
+        }
+    }
+}
+
+/** 
+*   //TODO
+*/
+void automated_move(Screen* screen, Player* player, int movingPlayer) {
+    int column = 0;
+    int row = 0;
+    if(is_board_full(screen)) {
+        column = screen->columnSize / 2;
+        row = screen->rowSize / 2;
+        if (screen->columnSize % 2 != 0) {
+            column++;
+        } 
+        if (screen->rowSize % 2 != 0) {
+            row++;
+        }
+        add_piece(screen, player->playerHand[0], column, row);
+    } else {
+        if (movingPlayer == 2) {
+            column = screen->columnSize - 1;
+            row = screen->rowSize - 1;
+            automated_move_player_2(screen, &column, &row);
+        } else {
+            column = 0;
+            row = 0;
+            automated_move_player_1(screen, &column, &row);
+        }
+        column++;
+        row++;
+        add_piece(screen, player->playerHand[0], column, row);
+    }
+    printf("Player %d plays %d%c in column %d row %d\n", movingPlayer, 
+            player->playerHand[0].number, player->playerHand[0].letter, 
+            column, row);
+    remove_player_piece(player, 0);
 }
 
 /**
 *   //TODO
 */
-void main_game_loop(Screen* screen, Player* player1, Player* player2, 
-    Deck* deck) {
+void main_game_loop(char* deckLocation, Screen* screen, Player* player1, 
+        Player* player2, Deck* deck) {
     int movingPlayer = 2;
     int cardsPlayed = 0;
+    Player* currentPlayer;
     //Set current player
     if (player1->currentPlayer) {
         movingPlayer = 1;
-    }
-    
+    } 
     while (1) {
         if (is_game_over(screen, deck)) {
-            printf("The game is dead crab rave \n");
             break;
         } else {
-            Player* currentPlayer = get_current_player(player1, player2, 
-                movingPlayer);
+            currentPlayer = get_current_player(player1, player2, movingPlayer);
+            print_screen(screen);
+            fflush(stdout);
+            if (currentPlayer->handSize != 6) {
+                deal_to_player(currentPlayer, deck);
+            }
             if (currentPlayer->type == 'a') {
-                break;
+                print_player_hand(currentPlayer, 3);
+                automated_move(screen, currentPlayer, movingPlayer);
             } else {
-                print_screen(screen);
-                if(currentPlayer->handSize != 6) {
-                    deal_to_player(currentPlayer, deck);
-                }
                 print_player_hand(currentPlayer, movingPlayer);
                 char* saveName;
-                if (process_manual_move(&saveName, screen, currentPlayer, deck, 
-                    cardsPlayed)) {
-                    save_file(screen, deck, player1, player2, cardsPlayed, 
-                        movingPlayer, saveName);
-                } else {
-                    switch_player(player1, player2, &movingPlayer);
-                    cardsPlayed++;
-                }                
+                if (process_manual_move(&saveName, screen, currentPlayer, deck,
+                        cardsPlayed) == 1) {
+                    save_file(deckLocation, screen, deck, player1, player2, 
+                            cardsPlayed, movingPlayer, saveName);
+                    process_manual_move(&saveName, screen, currentPlayer, deck,
+                            cardsPlayed);
+                }
             }
+            switch_player(player1, player2, &movingPlayer);
+            cardsPlayed++;    
         }
     }
+}
+
+
+void find_longest_path(int originalRow, int originalColumn, int pathSize,
+        Screen screen, int* biggestSize, char suit) {
+    pathSize++;
+    int right;
+    int left;
+    int below;
+    int above;
+
+    if (originalRow == screen.rowSize - 1) {
+        below = 0;
+    } else {
+        below = originalRow + 1;
+    }
+
+    if (originalRow == 0) {
+        above = screen.rowSize - 1;
+    } else {
+        above = originalRow - 1;
+    }
+
+    if (originalColumn == screen.columnSize - 1) {
+        right = 0;
+    } else {
+        right = originalColumn + 1;
+    }
+
+    if (originalRow == 0) {
+        left = screen.rowSize - 1;
+    } else {
+        left = originalColumn - 1;
+    }
+
+    /*
+    (int originalRow, int originalColumn, int pathSize,
+        Screen screen, int* biggestSize, char suit) {
+    */
+    
+    if (pathSize > *biggestSize 
+            && screen.board[originalRow][originalColumn].letter == suit) {
+        *biggestSize = pathSize;
+    } 
+
+    if (screen.board[below][originalColumn].number > 
+            screen.board[originalRow][originalColumn].number) {
+        find_longest_path(below, originalColumn, pathSize, screen, biggestSize,
+            suit);
+    } 
+
+    if (screen.board[originalRow][right].number > 
+            screen.board[originalRow][originalColumn].number) {
+        find_longest_path(right, originalColumn, pathSize, screen, biggestSize,
+            suit);
+    } 
+
+    if (screen.board[above][originalColumn].number > 
+            screen.board[originalRow][originalColumn].number) {
+        find_longest_path(above, originalColumn, pathSize, screen, biggestSize,
+            suit);
+    } 
+
+    if (screen.board[originalRow][left].number > 
+            screen.board[originalRow][left].number) {
+        find_longest_path(left, originalColumn, pathSize, screen, biggestSize,
+            suit);
+    } 
 }
 
 /**
@@ -746,12 +1024,15 @@ int main(int argc, char** argv) {
     check_arg_types(argc, argv, &player1, &player2);
     FILE* gameFile;
     FILE* deckFile;
+    char* deckLocation;
     // New Game 
     if (argc == 6) {
         screen.columnSize = atoi(argv[2]);
         screen.rowSize = atoi(argv[3]);
         initialise_screen(&screen);
         initialise_deck_file(argv[1], &deckFile, &deck);
+        fflush(stdout);
+        deckLocation = argv[1];
         player1.handSize = 0;
         player1.playerHand = malloc(sizeof(Piece) * 6);        
         deal_to_player(&player1, &deck);
@@ -769,12 +1050,16 @@ int main(int argc, char** argv) {
         deal_to_player(&player2, &deck);    
         player2.currentPlayer = 1;
     } else {
-        initialise_save_file(argv[1], &gameFile, &deckFile, &player1, &player2,
-            &screen, &deck);
-
+        initialise_save_file(&deckLocation, argv[1], &gameFile, &deckFile, 
+                &player1, &player2, &screen, &deck);
     }
-    main_game_loop(&screen, &player1, &player2, &deck);
+    main_game_loop(deckLocation, &screen, &player1, &player2, &deck);
     print_screen(&screen);
-    //free(deck.deckPile);
+    printf("Player 1=%d Player 2=%d\n", 4, 4);
+    // free(deck.deckPile);
+    // free(player1.playerHand);
+    // free(player2.playerHand);
+    // free(deckLocation);
+    // free_board(&screen);
     return 0;
 }
