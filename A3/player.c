@@ -48,7 +48,7 @@ int sanitise_input(char* string, Player* player) {
             exit(show_player_message(EOF));
         default:
             return INVALIDHUBMESSAGE;
-    }    
+    }  
     return 0;
 }
 
@@ -59,6 +59,7 @@ int sanitise_input(char* string, Player* player) {
 *       the index to shift cards up to
 */
 void remove_player_card(Player* player, int index) {
+    player->playedCards[player->id] = player->hand[index];
     for (int i = index; i < player->handSize; i++) {
         player->hand[i] = player->hand[i + 1];
     }
@@ -66,27 +67,71 @@ void remove_player_card(Player* player, int index) {
 }
 
 /**
-    The alice move loop for the player, since the functionality is shared with
-    the first and third possible moves, I can use this loop to simplify logic
-    The return statements exist so that the nested for loops can be exited
+    The loop for a finding the highest card with a list of suits, takes in a
+    player pointer, the list of suits to check for and a card to initialise.
+    in this case the 'highest' card which serves as the breakpoint for when a 
+    card in the suit is initialised
 */
-void alice_move_loop(Player* player, char* suits, Card highestCard) {
+int highest_card_loop(Player* player, char* suits) {
+    Card highestCard;
+    highestCard.suit = 'A';
+    highestCard.rank = 0;
     int index;  // Index to remove card at
     for (int s = 0; s < 4; s++) {
-        if (highestCard.rank != 0) { // Stop once rank is initialised
-            printf("PLAY%c%c\n", highestCard.suit, highestCard.rank);
-            remove_player_card(player, index); 
-            fflush(stdout);
-            break;
-        }
         for (int i = 0; i < player->handSize; i++) {
             if (player->hand[i].suit == suits[s] && 
                     player->hand[i].rank > highestCard.rank) {
                 highestCard = player->hand[i];
                 index = i;
+                if (i == player->handSize - 1) {
+                    printf("PLAY%c%c\n", highestCard.suit, highestCard.rank);
+                    remove_player_card(player, index); 
+                    fflush(stdout);
+                    return 1;
+                }
+            } else if (i == player->handSize - 1 && highestCard.rank != 0) {
+                printf("PLAY%c%c\n", highestCard.suit, highestCard.rank);
+                remove_player_card(player, index); 
+                fflush(stdout);
+                return 1;
             }
         }
-        
+    }
+    return 0;
+}
+
+
+
+void find_lead_card(Player* player, int mode, char suit) {
+    Card highestCard;
+    highestCard.suit = 'S';
+    highestCard.rank = 0;
+    Card lowestCard;
+    lowestCard.suit = 'S';
+    lowestCard.rank = 'g';
+    int index;  // Index saving for hand management and removal
+    if (mode == HIGHEST) {
+        for (int i = 0; i < player->handSize; i++) {
+            if (player->hand[i].rank > highestCard.rank && 
+                    player->hand[i].suit == suit) {
+                highestCard = player->hand[i];
+                index = i;
+            }
+        } 
+        printf("PLAY%c%c\n", lowestCard.suit, lowestCard.rank);
+        fflush(stdout);
+        remove_player_card(player, index); 
+    } else { // LOWEST MODE
+        for (int i = 0; i < player->handSize; i++) {
+            if (player->hand[i].rank < lowestCard.rank && 
+                    player->hand[i].suit == suit ) {
+                lowestCard = player->hand[i];
+                index = i; // Save index of card of smallest rank
+            }
+        }
+        printf("PLAY%c%c\n", lowestCard.suit, lowestCard.rank);
+        fflush(stdout);
+        remove_player_card(player, index); 
     }
 }
 
@@ -95,43 +140,89 @@ void alice_move_loop(Player* player, char* suits, Card highestCard) {
     different moves can be executed. It takes in a player that is to move
 */
 void alice_move(Player* player) {
-    char suits[4] = {'S', 'C', 'D', 'H'}; // Suit order for move 1
-    char otherSuits[4] = {'D', 'H', 'S', 'C'}; // Suit order for move 3
-    Card highestCard;
-    highestCard.suit = 'S';
-    highestCard.rank = 0;
-    Card lowestCard;
-    lowestCard.suit = player->leadSuit;
-    lowestCard.rank = '9';
+    char suitsMove1[4] = {'S', 'C', 'D', 'H'}; // Suit order for move 1
+    char suitsMove3[4] = {'D', 'H', 'S', 'C'}; // Suit order for move 3
     int containsLeadSuit = 0;
-    int index;  // Index saving for hand management and removal
-    for (int i = 0; i < player->handSize; i++) {
-        if (player->hand[i].suit == player->leadSuit) {
-            containsLeadSuit = 1;
-        }
-    }
+    contains_lead_suit(player, &containsLeadSuit);
     if (player->isLead) {   // Lead player move, this is gonna get messy
-        alice_move_loop(player, suits, highestCard);
-
+        highest_card_loop(player, suitsMove1);
     } else if (containsLeadSuit) { // Contains lead suit
-        for (int i = 0; i < player->handSize; i++) {
-            if (player->hand[i].rank < lowestCard.rank && 
-                    player->hand[i].suit == lowestCard.suit) {
-                lowestCard = player->hand[i];
-                index = i; // Save index of card of smallest rank
+        find_lead_card(player, LOWEST, player->leadSuit);
+    } else {    // Third Alice Move
+        highest_card_loop(player, suitsMove3);
+    }
+}
+
+/**
+    Checks the player's hand to see if the player contains the lead 
+    suit at play
+*/
+void contains_lead_suit(Player* player, int* containsLeadSuit) {
+    if (!player->isLead) {
+        for (int i = 0; i < player->handSize; i++) { // Check if lead suit in hand
+            if (player->hand[i].suit == player->leadSuit) {
+                *containsLeadSuit = 1;
             }
         }
-        printf("PLAY%c%c\n", lowestCard.suit, lowestCard.rank);
-        remove_player_card(player, index); 
-        fflush(stdout);
-    } else {    // Third Alice Move
-        alice_move_loop(player, otherSuits, highestCard);
+    }
+    
+}
+
+/**
+    The loop for a finding the lowest card with a list of suits, takes in a
+    player pointer, the list of suits to check for. The loop keeps going until 
+    the lowest card is initialised (rank != 'g')
+*/
+void lowest_card_loop(Player* player, char* suits) {
+    Card lowestCard;
+    lowestCard.suit = 'S';
+    lowestCard.rank = 'g';  // Start high and impossible, go lower
+    int index;  // Index to remove card at
+    for (int s = 0; s < 4; s++) {
+        if (lowestCard.rank != 'g') { // Stop once rank is initialised
+            printf("PLAY%c%c\n", lowestCard.suit, lowestCard.rank);
+            remove_player_card(player, index); 
+            fflush(stdout);
+            break;
+        }
+        for (int i = 0; i < player->handSize; i++) {
+            if (player->hand[i].suit == suits[s] && 
+                    player->hand[i].rank < lowestCard.rank) {
+                lowestCard = player->hand[i];
+                index = i;
+            }
+        }
     }
 }
 
 //TODO:
 void bob_move(Player* player) {
-    fprintf(stderr, "Doing bob move\n");
+    char suitsMove1[4] = {'D', 'H', 'S', 'C'}; // Suit order for move 1
+    char suitsMove2[4] = {'S', 'C', 'H', 'D'}; // Suit order for move 2
+    char suitsMove4[4] = {'S', 'C', 'D', 'H'}; // Suit order for move 4
+    int containsLeadSuit = 0;
+    int thresholdReached = 0;
+    contains_lead_suit(player, &containsLeadSuit);
+    //A player has reached threshold & diamonds have been played
+    for (int i = 0; i < player->amountOfPlayers; i++) {
+        if (player->playerDiamonds[i] >= player->threshold && 
+                player->diamondsInRound > 0) {
+            thresholdReached = 1;
+        }
+    }
+    if (player->isLead) {
+        lowest_card_loop(player, suitsMove1);
+    } else if (thresholdReached) {
+        if (containsLeadSuit) { // Has lead suit
+             find_lead_card(player, HIGHEST, player->leadSuit);
+        } else {
+            lowest_card_loop(player, suitsMove2);
+        }
+    } else if (containsLeadSuit) {
+        find_lead_card(player, LOWEST, player->leadSuit);
+    } else {
+        highest_card_loop(player, suitsMove4); //Same as alice move
+    }
 }
 
 /**
@@ -163,6 +254,10 @@ int can_play(Player* player, char* string) {
     } else if ((rankPlayed < '1' || rankPlayed > '9') && (rankPlayed < 'a' || 
             rankPlayed > 'f')) {
         exit(show_player_message(INVALIDHUBMESSAGE));
+    } else if (recentPlayer == player->id) {
+         exit(show_player_message(INVALIDHUBMESSAGE));
+    } else if (recentPlayer >= player-> amountOfPlayers) {
+        exit(show_player_message(INVALIDHUBMESSAGE));
     }
     // Update tracker of diamonds and current diamonds in round
     if (suitPlayed == 'D') {
@@ -172,6 +267,8 @@ int can_play(Player* player, char* string) {
     if (player->leadId == recentPlayer) {
         player->leadSuit = suitPlayed;
     }
+    player->playedCards[recentPlayer].suit = suitPlayed;
+    player->playedCards[recentPlayer].rank = rankPlayed;
     // If the player was the last player e.g. player 5 in a 6 player game
     // the player can play, this is a special base case for player 0
     // If the most recent player was the last player, only for games with
@@ -185,6 +282,18 @@ int can_play(Player* player, char* string) {
         return 1;
     }
     return 0;
+}
+
+void print_round_results(Player* player) {
+    fprintf(stderr, "Lead player=%d: ", player->leadId);
+    for (int i = 0; i < player->amountOfPlayers; i++) {
+        fprintf(stderr, "%c.%c", player->playedCards[i].suit, 
+                player->playedCards[i].rank);
+        if (i != player->amountOfPlayers - 1) {
+             fprintf(stderr, " ");
+        } 
+    }
+    fprintf(stderr, "\n");
 }
 
 /**
@@ -214,6 +323,9 @@ void init_new_round(Player* player, char* string) {
         } else {
             player->lastPlayer = --leadPlayer;
         }
+        if (player->playedCards[0].suit != 0) {
+            print_round_results(player);
+        }
         player->leadId = leadPlayer;
         player->diamondsInRound = 0;
     } else {    // Message doesn't have newround in it
@@ -228,23 +340,8 @@ void init_new_round(Player* player, char* string) {
 void game_over(Player* player) {
     free(player->hand);
     free(player->playerDiamonds);
+    print_round_results(player);
     exit(0);
-}
-
-int main(int argc, char** argv) {
-    Player player; 
-    int status;
-    if (check_player_args(argc, argv)) {
-        return show_player_message(check_player_args(argc, argv));
-    }
-    init_player(&player, argv);
-    printf("@"); // Initialised
-    fflush(stdout); // Flush uwu
-    char* hand = read_fd_line(STDIN); // Read Hand
-    if (status = init_player_hand(hand, &player), status != 0) {
-        return show_player_message(status);
-    }
-    return player_loop(&player); 
 }
                                     
 /**
@@ -293,7 +390,7 @@ int init_player_hand(char* deck, Player* player) {
                 deck[i + iterator + 1] > 'f')) {
             return INVALIDHUBMESSAGE; // Check if the deck is correct
         } else if (i < strlen(deck) - iterator - 3 && 
-                deck[i + iterator + 2] != ',') {
+                deck[i + iterator + 2] != ',' && player->handSize > 1) {
             return INVALIDHUBMESSAGE; // Check if the ',' is correct
         }
         player->hand[counter].suit = deck[i + iterator]; // Add to hand
@@ -301,6 +398,13 @@ int init_player_hand(char* deck, Player* player) {
         counter++;
     }
     return 0;
+}
+
+void zero_out_played_cards(Player* player) {
+    for (int i = 0; i < player->amountOfPlayers; i++) {
+        player->playedCards[i].rank = 0;
+        player->playedCards[i].suit = 0; 
+    }
 }
 
 /**
@@ -325,6 +429,7 @@ void init_player(Player* player, char** args) {
     player->playerDiamonds = malloc(sizeof(int) * atoi(NUMPLAYER_ARGS));
     player->amountOfPlayers = atoi(NUMPLAYER_ARGS);
     player->diamondsInRound = 0;
+    player->playedCards = malloc(sizeof(Card) * atoi(NUMPLAYER_ARGS)); //TODO: Change
 }
 
 /**
@@ -335,9 +440,8 @@ int check_player_args(int argsNum, char** args) {
     if (argsNum != 5) {
         return INCORRECTARGS;
     } 
-    //Check for Invalid Players
     if ((strlen(NUMPLAYER_ARGS) == 1 && NUMPLAYER_ARGS[0] < '2') || 
-            NUMPLAYER_ARGS[0] == 0) {
+            NUMPLAYER_ARGS[0] == 0) {    //Check for Invalid Players
         return INVALIDPLAYERS;
     } 
     for (int i = 0; i < strlen(NUMPLAYER_ARGS); i++) { 
@@ -345,22 +449,22 @@ int check_player_args(int argsNum, char** args) {
             return INVALIDPLAYERS;
         }
     }
-    // Check Position in player amount
-    if (strlen(PLAYER_POS) == 1 && (atoi(PLAYER_POS) < 0 || 
+    if (strlen(PLAYER_POS) == 1 && (atoi(PLAYER_POS) < 0 || // Check Position
             atoi(PLAYER_POS) >= atoi(NUMPLAYER_ARGS))) {
         return INVALIDPOSITION;
+    } else if (PLAYER_POS[0] == 0) {
+        return INVALIDPOSITION;
     }
-
     for (int i = 0; i < strlen(PLAYER_POS); i++) { 
         if (PLAYER_POS[i] < '0' || PLAYER_POS[i] > '9') {
             return INVALIDPOSITION;
         }
     }
-
-    // Check Threshold
     if (strlen(THRESHOLD_ARGS) == 1 && THRESHOLD_ARGS[0] < '2') {
+        return BADTHRESHOLD; //// Check Threshold
+    } else if (THRESHOLD_ARGS[0] == 0) {
         return BADTHRESHOLD;
-    } 
+    }
 
     for (int i = 0; i < strlen(THRESHOLD_ARGS); i++) { 
         if (THRESHOLD_ARGS[i] < '0' || THRESHOLD_ARGS[i] > '9') {
@@ -371,7 +475,9 @@ int check_player_args(int argsNum, char** args) {
     // Check Hand size
     if (strlen(HANDSIZE_ARGS) == 1 && HANDSIZE_ARGS[0] < '1') {
         return INVALIDHANDSIZE;
-    } 
+    } else if (HANDSIZE_ARGS[0] == 0) {
+        return INVALIDHANDSIZE;
+    }
 
     for (int i = 0; i < strlen(HANDSIZE_ARGS); i++) { 
         if (HANDSIZE_ARGS[i] < '0' || HANDSIZE_ARGS[i] > '9') {

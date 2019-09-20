@@ -380,6 +380,6 @@ int main(int argc, char** argv) {
     deal_to_players(&gameHub);
     if (check_dead_children(&gameHub)) {
         return show_message(PLAYERERROR);
-    } 
+    }
     return game_loop(&gameHub);
 }

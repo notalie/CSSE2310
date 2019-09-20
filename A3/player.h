@@ -15,6 +15,8 @@
 #define STDIN 0
 #define STDOUT 1
 #define MIN_INPUT_SIZE 8
+#define LOWEST 1
+#define HIGHEST 2
 
 #include "player.h"
 #include "structs.h"
@@ -50,7 +52,10 @@ int can_play(Player*, char*);
 void game_over(Player*);
 void alice_move(Player*);
 void bob_move(Player*);
-void alice_move_loop(Player*, char*, Card);
+int  highest_card_loop(Player*, char*); 
 void remove_player_card(Player*, int);
+void lowest_card_loop(Player*,char*);
+void contains_lead_suit(Player*, int*);
+void find_lead_card(Player*, int, char);
 
 #endif

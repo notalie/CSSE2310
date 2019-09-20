@@ -30,6 +30,7 @@ typedef struct {
                         // including the current player
     int diamondsInRound;
     char leadSuit;
+    Card* playedCards;
     int leadId;
 } Player;
 

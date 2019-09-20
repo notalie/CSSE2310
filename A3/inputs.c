@@ -23,3 +23,7 @@ char* read_fd_line(int fd) {
     }
 }
 
+
+// int determind_winner(Card* board, int boardSize) {
+//     for ()
+// }
