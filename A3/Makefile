@@ -3,14 +3,14 @@
 CFLAGS = -Wall -pedantic -g -std=gnu99
 all: 2310hub 2310alice 2310bob
 
-2310hub: hub.c hub.o inputs.c inputs.o
-	gcc hub.o inputs.o -o 2310hub
+2310hub: hub.c hub.o
+	gcc hub.o -o 2310hub
 
-2310alice: inputs.o player.o alice.o
-	gcc $(CFLAGS) player.o inputs.o alice.o -o 2310alice
+2310alice: player.o alice.o
+	gcc $(CFLAGS) player.o alice.o -o 2310alice
 
-2310bob: inputs.o player.o bob.o
-	gcc $(CFLAGS) player.o inputs.o bob.o -o 2310bob
+2310bob: player.o bob.o
+	gcc $(CFLAGS) player.o bob.o -o 2310bob
 
 alice.o: alice.c player.h
 	gcc $(CFLAGS) -c alice.c
@@ -23,9 +23,6 @@ hub.o: hub.c hub.h structs.h
 
 player.o: player.c player.h structs.h
 	gcc $(CFLAGS) -c player.c
-
-inputs.o: inputs.c
-	gcc $(CFLAGS) -c inputs.c
 
 clean:
 	rm -rf *.o *.err *.out

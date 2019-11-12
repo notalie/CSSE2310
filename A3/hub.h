@@ -13,7 +13,6 @@
 #include <stdbool.h>
 #include "structs.h"
 
-
 /** 
     Defines a scoreboard that is in charge of managing the players IDS,
     their scores and their diamonds played. It also keeps track of the 
@@ -21,7 +20,7 @@
 */
 typedef struct { 
     int currentPlayer;
-    int currentRound;
+    int currentRound;   // Current round to signal game over
     Player* playerList; // an array of player structs
     pid_t* childPIDs;
 } Scoreboard;
@@ -36,11 +35,13 @@ typedef struct {
     FILE* deckFile;
     int numberOfPlayers;
     int diamondsPlayed;
-    Card* playerBoard;
+    Card* playerBoard;  // For tracking which player played what
+    Card* playerBoardOrdered; // For display
     Scoreboard scoreboard;
     int deckSize;
     int threshold;
     int leadPlayer;
+    char leadSuit;
     char* childArgs[5];
     FILE** readFiles;
     FILE** writeFiles;
@@ -55,6 +56,7 @@ int game_loop(Hub*);
 int check_dead_children(Hub*);
 int spawn_children(Hub*, char**);
 void get_child_args(Hub*, char**, int);
+void init_player_hands(Hub*, int, char*, int);
 
 void deal_to_player(Hub*);
 
@@ -62,14 +64,17 @@ void deal_to_player(Hub*);
 #define WRITE_END 1
 #define SIGHUP 1
 #define SIGPIPE 13
+#define SIGCHILD 20
 
 #define FILE_ARG args[1]
 #define THRESHOLD_ARG args[2]
 #define MIN_ARGS 4
 #define INT_MAX 10
-#define DOUBLEDIGITS 2
-#define SINGLEDIGITS 1
-
+#define DOUBLE_DIGITS 2
+#define SINGLE_DIGITS 1
+#define ALL_CHILDREN -1
+#define MAX_STRING_SIZE 10
+#define MIN_STRING_SIZE 5
 #define HANDSIZE (gameHub->deckSize/gameHub->numberOfPlayers)
 
 #endif
