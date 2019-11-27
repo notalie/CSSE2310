@@ -5,6 +5,6 @@ Assignments from CSSE2310 Sem 2 2019
 * Assignment 1 - 92%
 * Assignment 2 - 96% 
 * Assignment 3 - 65%
-* Assignment 4 - ??
+* Assignment 4 - 98%
 
-# Overall Mark: ????
+# Overall Mark: 7 uwu
